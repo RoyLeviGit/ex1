@@ -1,6 +1,8 @@
 #include "map.h"
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #define NO_SIZE -1
 
@@ -13,30 +15,37 @@ struct Node {
 typedef struct Node* Node;
 
 struct Map_t {
-   Node head; 
+   Node head;
+   Node iterator;
+   int size;
 };
 
 Map mapCreate() {
-    Map result = malloc(sizeof(*result));
-    if (result == NULL) {
+    Map map = malloc(sizeof(*map));
+    if (map == NULL) {
         return NULL;
     }
-    result->head == NULL;
-    return result;
+    map->head = NULL;
+    map->iterator = NULL;
+    map->size = 0;
+    return map;
+}
+
+static void nodeListDestroy(Node head) {
+    while (head!=NULL){
+        free(head->key);
+        free(head->value);
+        Node tmp = head->next;
+        free(head);
+        head = tmp;
+    }
 }
 
 void mapDestroy(Map map) {
     if (map==NULL) {
         return;
     }
-    Node current_origin = map->head;
-    while (current_origin!=NULL){
-        free(current_origin->key);
-        free(current_origin->value);
-        Node tmp = current_origin->next;
-        free(current_origin);
-        current_origin = tmp;
-    }
+    nodeListDestroy(map->head);
     free(map);
 }
 
@@ -61,6 +70,7 @@ static Node nodeCopyData(Node node) {
     strcpy(copy->key,node->key);
     strcpy(copy->value,node->value);
     copy->next = NULL;
+    return copy;
 }
 
 Map mapCopy(Map map) {
@@ -88,6 +98,7 @@ Map mapCopy(Map map) {
         current_copy = current_copy->next;
         current_origin = current_origin->next;  
     }
+    copy->size = map->size;
     return copy;
 }
 
@@ -95,9 +106,7 @@ int mapGetSize(Map map) {
     if (map == NULL) {
         return NO_SIZE;
     }
-    int counter = 0;
-    for (Node current = map->head; current !=NULL; current = current->next, ++counter);
-    return counter;
+    return map->size;
 }
 
 bool mapContains (Map map, const char* key) {
@@ -112,7 +121,7 @@ MapResult mapPut (Map map, const char* key, const char* data) {
     char* value = mapGet(map, key);
     // if map contains key
     if (value != NULL) {
-        value = realloc(sizeof(*value)*strlen(data));
+        value = realloc(value, sizeof(*value)*strlen(data));
         if (value == NULL) {
             return MAP_OUT_OF_MEMORY;
         }
@@ -135,7 +144,9 @@ MapResult mapPut (Map map, const char* key, const char* data) {
 
         new_node->next = map->head;
         map->head = new_node;
+        map->size++;
    }
+   return MAP_SUCCESS;
 }
 
 char* mapGet(Map map, const char* key) {
@@ -158,11 +169,12 @@ MapResult mapRemove(Map map, const char* key) {
     Node previous, current = map->head;
 
     // take care if head case
-    if (current !=NULL && strcmp(current->key, key)) {
+    if (current !=NULL && !strcmp(current->key, key)) {
         free(current->key);
         free(current->value);
         map->head = current->next;
         free(current);
+        map->size--;
         return MAP_SUCCESS;
     }
 
@@ -178,12 +190,57 @@ MapResult mapRemove(Map map, const char* key) {
     free(current->key);
     free(current->value);
     free(current);
+    map->size--;
     return MAP_SUCCESS;
 }
 
 char* mapGetFirst(Map map) {
-    if (map == NULL || map->head != NULL) {
+    if (map == NULL || map->head == NULL) {
         return NULL;
     }
+    assert(map->head->key != NULL);
+    map->iterator = map->head;
+    return map->iterator->key;
+}
 
+char* mapGetNext(Map map){
+    if (map==NULL || map->iterator==NULL || map->iterator->next==NULL) {
+        return NULL;
+    }
+    assert(map->iterator->key!=NULL);
+    assert(map->iterator->next->key!=NULL);
+    map->iterator = map->iterator->next;
+    return map->iterator->key;
+}
+
+MapResult mapClear(Map map) {
+    if (map == NULL) {
+        return MAP_NULL_ARGUMENT;
+    }
+    nodeListDestroy(map->head);
+    map->head = NULL;
+    map->iterator = NULL;
+    map->size = 0;
+    return MAP_SUCCESS;
+}
+
+static void nodePrint(Node node) {
+    assert(node != NULL);
+    assert(node->key != NULL);
+    assert(node->value != NULL);
+    printf("\"%s\" : \"%s\"\n", node->key, node->value);
+}
+
+void mapPrint(Map map){
+    if (map==NULL) {
+        printf("Map is NULL\n");
+        return;
+    }
+    printf("Map size is: %d\n", map->size);
+    Node current = map->head;
+    while (current!=NULL) {
+        nodePrint(current);
+        current = current->next;
+    }
+    return;
 }

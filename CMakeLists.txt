@@ -9,4 +9,8 @@ set(MTM_FLAGS_RELEASE "${MTM_FLAGS_DEBUG} -DNDEBUG")
 
 set(CMAKE_C_FLAGS ${MTM_FLAGS_DEBUG})
 
-add_executable(ex1 map.h map.c)
+link_directories(.)
+
+add_executable(ex1 test_utilities.h map_example_test.c map.h map.c)
+
+target_link_libraries(ex1 libmap.a)
