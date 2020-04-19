@@ -3,15 +3,16 @@
 
 #include "utilities.h"
 
+#define MAX_TRIBE_KEY_LENGTH 20
 typedef struct tribe {
     int id;
     char* name;
 } *Tribe;
 
 // return - NULL is out of memory
-Tribe tribeCreate(int tribe);
+Tribe tribeCreate(int id, char* name);
 
-bool isValidTribeID(int tribe_id);
+bool isValidTribeID(int id);
 
 bool isValidTribeName(char* name);
 

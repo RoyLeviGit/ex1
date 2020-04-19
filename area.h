@@ -12,11 +12,12 @@ typedef struct area {
 
 void areaDestroy(Area area);
 
-bool isValidAreaID(int area_id);
+bool isValidAreaID(int id);
+
+bool isValidAreaName(char* name);
 
 Area stringToArea(char* key, char* value);
 
 Result areaToString(Area area, char* key, char* value);
-
 
 #endif //AREA_H

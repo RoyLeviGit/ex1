@@ -6,4 +6,8 @@ typedef enum Result {
     SUCCESS
 } Result;
 
+int stringToInt(char* str);
+
+char* intToString(int number);
+
 #endif // "UTILITIES_H"
