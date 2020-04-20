@@ -41,7 +41,7 @@ int stringToInt(char* str) {
 
 char* intToString(int num) {
     int length = lengthOfNum(num);
-    char* str =(char*)malloc((length+1)*sizeof(char));
+    char* str =(char*)malloc((length+1)*sizeof(*str));
     if (str == NULL) {
         return NULL;  
     }
@@ -53,15 +53,24 @@ char* intToString(int num) {
     return str;
 }
 
-void stringToTwoNumbers(char* str, int* num1, int* num2) {
+Result stringToTwoNumbers(const char* str, int* num1, int* num2) {
     assert(str != NULL);
     assert(num1 != NULL);
     assert(num2 != NULL);
-    
-    char* token = strtok(str, TOKEN);
+
+    // create copy of str for token to destroy :)
+    char* copy = malloc(sizeof(*copy)*strlen(str));
+    if (copy == NULL) {
+        return OUT_OF_MEMORY;
+    }
+    strcpy(copy, str);
+
+    char* token = strtok(copy, TOKEN);
     *num1 = stringToInt(token);
     token = strtok(NULL, TOKEN);
     *num2 = stringToInt(token);
+    free(copy);
+    return SUCCESS;
 }
 
 Result twoNumbersToString(int num1, int num2, char** str) {

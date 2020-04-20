@@ -9,11 +9,19 @@ Tribe tribeCreate(int id, const char* name){
     }
     tribe->id = id;
     tribe->name = malloc(sizeof(tribe->name)*strlen(name));
+    if (tribe->name == NULL) {
+        free(tribe);
+        return NULL;
+    }
     strcpy(tribe->name, name);
     return tribe;
 }
 
 void tribeDestroy(Tribe tribe) {
+    if (tribe == NULL) {
+        return;
+    }
+    free(tribe->name);
     free(tribe);
 }
 
@@ -40,11 +48,12 @@ Tribe stringToTribe(char* key, char* value) {
 Result tribeToString(Tribe tribe, char** key, char** value) {
     assert(tribe != NULL);
     *key = intToString(tribe->id);
-    *value = tribe->name;
+    *value = malloc(sizeof(*value)*strlen(tribe->name));
     if (*key == NULL || *value == NULL) {
         free(*key);
         free(*value);
         return OUT_OF_MEMORY;
     }
+    strcpy(*value, tribe->name);
     return SUCCESS;
 }

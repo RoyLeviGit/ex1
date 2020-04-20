@@ -33,7 +33,9 @@ Vote stringToVote(char* key, char* value) {
     assert(key != NULL);
     assert(value != NULL);
     int area_id, tribe_id, votes;
-    stringToTwoNumbers(key, &area_id, &tribe_id);
+    if (stringToTwoNumbers(key, &area_id, &tribe_id) == OUT_OF_MEMORY) {
+        return NULL;
+    }
     votes = stringToInt(value);
     assert(votes != CONVERT_ERROR);
     return voteCreate(area_id, tribe_id, votes);

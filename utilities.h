@@ -15,7 +15,7 @@ int stringToInt(char* str);
 
 char* intToString(int number);
 
-void stringToTwoNumbers(char* str, int* num1, int* num2);
+Result stringToTwoNumbers(const char* str, int* num1, int* num2);
 
 Result twoNumbersToString(int num1, int num2, char** str);
 

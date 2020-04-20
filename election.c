@@ -174,7 +174,17 @@ char* electionGetTribeName (Election election, int tribe_id) {
         }
         if (tribe->id == tribe_id){
             tribeDestroy(tribe);
-            return mapGet(election->tribes,key);
+            // return copy of tribe name
+            char* value = mapGet(election->tribes,key);
+            tribe = stringToTribe(key, value);
+            char* name = malloc(sizeof(*name)*strlen(tribe->name));
+            if (name == NULL) {
+                tribeDestroy(tribe);
+                return NULL;
+            }
+            strcpy(name, tribe->name);
+            tribeDestroy(tribe);
+            return name;
         }
         tribeDestroy(tribe);
     }
@@ -248,44 +258,61 @@ ElectionResult electionRemoveVote(Election election, int area_id, int tribe_id, 
     Vote new_vote = voteCreate(area_id, tribe_id, num_of_votes);
     if (new_vote == NULL || area_search_result == ELECTION_OUT_OF_MEMORY 
     || tribe_search_result == ELECTION_OUT_OF_MEMORY) {
+        voteDestroy(new_vote);
         return ELECTION_OUT_OF_MEMORY;
     }
 
     // logic
     char *key = NULL, *value = NULL;
     if (voteToString(new_vote, &key, &value) == OUT_OF_MEMORY) {
+        voteDestroy(new_vote);
         return ELECTION_OUT_OF_MEMORY;
     }
     assert(key != NULL);
     assert(value != NULL);
     // get old and new vote
     char* old_value = mapGet(election->votes, key);
+    if (old_value == NULL) {
+        // no previous value, so do nothing.
+        voteDestroy(new_vote);
+        free(key);
+        free(value);
+        return ELECTION_SUCCESS;
+    }
+
     Vote old_vote = stringToVote(key, old_value);
     if (old_vote == NULL) {
+        voteDestroy(new_vote);
         free(key);
         free(value);
         return ELECTION_OUT_OF_MEMORY;
     }
     // change votes
     new_vote->votes = old_vote->votes - new_vote->votes;
-    if (isValidNumberOfVotes(new_vote->votes)) {
+    if (!isValidNumberOfVotes(new_vote->votes)) {
         mapRemove(election->votes, key);
     } else {
         // get new_vote new value and change it in the map
         if (voteToString(new_vote, &key, &value) == OUT_OF_MEMORY) {
+            voteDestroy(new_vote);
+            voteDestroy(old_vote);
             free(key);
             free(value);
             return ELECTION_OUT_OF_MEMORY;
         }
         assert(key != NULL);
         assert(value != NULL);
-        MapResult map_result = mapPut(election->votes, key, value);
-        if (map_result == MAP_OUT_OF_MEMORY) {
+        MapResult result = mapPut(election->votes, key, value);
+        if (result == MAP_OUT_OF_MEMORY) {
+            voteDestroy(new_vote);
+            voteDestroy(old_vote);
             free(key);
             free(value);
             return ELECTION_OUT_OF_MEMORY;
         }
     }
+    voteDestroy(new_vote);
+    voteDestroy(old_vote);
     free(key);
     free(value);
     return ELECTION_SUCCESS;
@@ -419,7 +446,12 @@ Map electionComputeAreasToTribesMapping (Election election) {
         } else {
             // area already in celebs map
             int current_tribe_id, current_num_of_votes;
-            stringToTwoNumbers(area_value, &current_tribe_id, &current_num_of_votes);
+            if (stringToTwoNumbers(area_value, &current_tribe_id, &current_num_of_votes) == OUT_OF_MEMORY) {
+                mapDestroy(celebTribes);
+                voteDestroy(vote);
+                free(area_key);
+                return NULL;
+            }
 
             if (vote->votes > current_num_of_votes 
             || (vote->votes == current_num_of_votes && vote->tribe_id < current_tribe_id)) {
@@ -449,7 +481,10 @@ Map electionComputeAreasToTribesMapping (Election election) {
     MAP_FOREACH(key, celebTribes) {
         char* value = mapGet(celebTribes, key);
         int desired_tribe_id, not_so_desired_votes;
-        stringToTwoNumbers(value, &desired_tribe_id, &not_so_desired_votes);
+        if (stringToTwoNumbers(value, &desired_tribe_id, &not_so_desired_votes) == OUT_OF_MEMORY) {
+            mapDestroy(celebTribes);
+            return NULL;
+        }
 
         char* desired_tribe_id_string = intToString(desired_tribe_id);
         if (desired_tribe_id_string == NULL) {

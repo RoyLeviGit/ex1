@@ -166,6 +166,9 @@ MapResult mapRemove(Map map, const char* key) {
     if (map == NULL || key == NULL) {
         return MAP_NULL_ARGUMENT;
     }
+    // reset iterator
+    mapGetFirst(map);
+
     Node previous, current = map->head;
 
     // take care if head case
@@ -207,7 +210,6 @@ char* mapGetNext(Map map){
     if (map==NULL || map->iterator==NULL || map->iterator->next==NULL) {
         return NULL;
     }
-    assert(map->iterator->key!=NULL);
     assert(map->iterator->next->key!=NULL);
     map->iterator = map->iterator->next;
     return map->iterator->key;

@@ -9,11 +9,19 @@ Area areaCreate(int id, const char* name){
     }
     area->id = id;
     area->name = malloc(sizeof(*area->name)*strlen(name));
+    if (area->name == NULL) {
+        free(area);
+        return NULL;
+    }
     strcpy(area->name, name);
     return area;
 }
 
 void areaDestroy(Area area) {
+    if (area == NULL) {
+        return;
+    }
+    free(area->name);
     free(area);
 }
 
@@ -39,11 +47,12 @@ Area stringToArea(char* key, char* value) {
 Result areaToString(Area area, char** key, char** value) {
     assert(area != NULL);
     *key = intToString(area->id);
-    *value = area->name;
+    *value = malloc(sizeof(*value)*strlen(area->name));
     if (*key == NULL || *value == NULL) {
         free(*key);
         free(*value);
         return OUT_OF_MEMORY;
     }
+    strcpy(*value, area->name);
     return SUCCESS;
 }
