@@ -1,12 +1,19 @@
 #include "utilities.h"
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <assert.h>
 
 #define NUMBER_BASE 10
 #define ZERO_ASCII '0'
 #define NINE_ASCII '9'
-#define CONVERT_ERROR -1
+#define TOKEN ":"
+#define TOKEN_LENGTH 1
+#define SMALL_A 'a'
+#define SMALL_Z 'z'
+#define SPACE ' '
 
-static lengthOfNum(int num) {
+static int lengthOfNum(int num) {
     int sum =0;
     while(num != 0)
     {
@@ -34,12 +41,47 @@ int stringToInt(char* str) {
 
 char* intToString(int num) {
     int length = lengthOfNum(num);
-    char* str =(char*)malloc(length*sizeof(char));
+    char* str =(char*)malloc((length+1)*sizeof(char));
     if (str == NULL) {
         return NULL;  
     }
+
+    str[length] = 0;
     for (int i=length-1; i >= 0; i--, num /= NUMBER_BASE) {
         str[i] = (num%NUMBER_BASE)+ZERO_ASCII;
     }
     return str;
+}
+
+void stringToTwoNumbers(char* str, int* num1, int* num2) {
+    assert(str != NULL);
+    assert(num1 != NULL);
+    assert(num2 != NULL);
+    
+    char* token = strtok(str, TOKEN);
+    *num1 = stringToInt(token);
+    token = strtok(NULL, TOKEN);
+    *num2 = stringToInt(token);
+}
+
+Result twoNumbersToString(int num1, int num2, char** str) {
+    char* num1_string = intToString(num1);
+    char* num2_string = intToString(num2);
+    *str = malloc(sizeof(**str)*(strlen(num1_string)+strlen(num2_string)+TOKEN_LENGTH+1));
+    if (num1_string == NULL || num2_string == NULL || *str == NULL) {
+        free(num1_string);
+        free(num2_string);
+        free(*str);
+        return OUT_OF_MEMORY;
+    }
+
+    sprintf(*str, "%s%s%s", num1_string, TOKEN, num2_string);
+    return SUCCESS;
+}
+
+bool isLetterOrSpace(char character){
+    if((character < SMALL_A || character > SMALL_Z) && character != SPACE){
+        return false ;
+    }
+    return true;
 }

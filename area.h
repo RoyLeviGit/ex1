@@ -3,21 +3,22 @@
 
 #include "utilities.h"
 
-#define MAX_AREA_KEY_LENGTH 20
-
 typedef struct area {
     int id;
     char* name;
 } *Area;
 
+
+Area areaCreate(int id, const char* name);
+
 void areaDestroy(Area area);
 
 bool isValidAreaID(int id);
 
-bool isValidAreaName(char* name);
+bool isValidAreaName(const char* name);
 
 Area stringToArea(char* key, char* value);
 
-Result areaToString(Area area, char* key, char* value);
+Result areaToString(Area area, char** key, char** value);
 
 #endif //AREA_H
