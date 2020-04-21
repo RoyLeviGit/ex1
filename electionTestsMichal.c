@@ -3,7 +3,7 @@
 #include "test_utilities.h"
 
 /*The number of tests*/
-#define  NUMBER_TESTS 4
+#define  NUMBER_TESTS 6
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -70,6 +70,40 @@ bool  testAddRemoveVotes() {
     return true;
 }
 
+bool testTribeName(){
+    Election election = electionCreate();
+    ASSERT_TEST(electionAddTribe(election, FIRST_TRIBE, "first tribe") == ELECTION_SUCCESS); //create tribe 1
+    ASSERT_TEST(electionAddTribe(election, SECOND_TRIBE, "second tribe") == ELECTION_SUCCESS); //create tribe 2
+    ASSERT_TEST(electionAddTribe(election, THIRD_TRIBE, "third tribe") == ELECTION_SUCCESS); //create tribe 3
+    ASSERT_TEST(electionAddArea(election, FIRST_AREA, "first area") == ELECTION_SUCCESS); //create area 1
+    ASSERT_TEST(electionAddArea(election, SECOND_AREA, "second area") == ELECTION_SUCCESS); //create area 2
+
+    ASSERT_TEST(strcmp(electionGetTribeName(election, THIRD_TRIBE), "third tribe") == 0);
+    ASSERT_TEST(electionGetTribeName(election, 100) == NULL);
+    ASSERT_TEST(electionSetTribeName(election, THIRD_TRIBE, "Hello") == ELECTION_INVALID_NAME);
+    ASSERT_TEST(strcmp(electionGetTribeName(election, THIRD_TRIBE), "third tribe") == 0);
+    ASSERT_TEST(electionSetTribeName(election, THIRD_TRIBE, "hello") == ELECTION_SUCCESS);
+    ASSERT_TEST(strcmp(electionGetTribeName(election, THIRD_TRIBE), "third tribe") != 0);
+
+    electionDestroy(election);
+    return true;
+}
+
+bool testAlreadyExist() {
+	Election election = electionCreate();
+	ASSERT_TEST(electionAddArea(election, 1, "first area") == ELECTION_SUCCESS);
+    ASSERT_TEST(electionAddArea(election, 2, "second area") == ELECTION_SUCCESS);
+
+    ASSERT_TEST(electionAddTribe(election, 1, "first tribe") == ELECTION_SUCCESS);
+    ASSERT_TEST(electionAddTribe(election, 2, "second tribe") == ELECTION_SUCCESS);
+
+    ASSERT_TEST(electionAddArea(election, 1, "first area") == ELECTION_AREA_ALREADY_EXIST);
+    ASSERT_TEST(electionAddTribe(election, 2, "second tribe") == ELECTION_TRIBE_ALREADY_EXIST);
+
+	electionDestroy(election);
+	return true;
+}
+
 bool testComputeAreasToTribesMapping()
 {
     Election election = electionCreate();
@@ -118,7 +152,9 @@ bool (*tests[]) (void) = {
                         testElectionRemoveAreas,
                         testElectionRemoveAddtribe,
                         testAddRemoveVotes,
-                        testComputeAreasToTribesMapping
+                        testComputeAreasToTribesMapping,
+                        testAlreadyExist,
+                        testTribeName
 };
 
 /*The names of the test functions should be added here*/
@@ -126,7 +162,9 @@ const char* testNames[] = {
                             "testElectionRemoveAreas",
                             "testElectionRemoveAddtribe",
                             "testAddRemoveVotes",
-                            "testComputeAreasToTribesMapping"
+                            "testComputeAreasToTribesMapping",
+                            "testAlreadyExist",
+                            "testTribeName"
 };
 
 int main(int argc, char* argv[]) {

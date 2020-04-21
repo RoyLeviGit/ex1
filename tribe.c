@@ -2,13 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct tribe {
+    int id;
+    char* name;
+};
+
 Tribe tribeCreate(int id, const char* name){
     Tribe tribe = malloc(sizeof(*tribe));
     if (tribe == NULL) {
         return NULL;
     }
     tribe->id = id;
-    tribe->name = malloc(sizeof(tribe->name)*strlen(name));
+    tribe->name = malloc(sizeof(tribe->name)*(strlen(name)+1));
     if (tribe->name == NULL) {
         free(tribe);
         return NULL;
@@ -23,6 +28,14 @@ void tribeDestroy(Tribe tribe) {
     }
     free(tribe->name);
     free(tribe);
+}
+int getTribeID(Tribe tribe){
+    assert(tribe != NULL);
+    return tribe->id;
+}
+char* getTribeName(Tribe tribe){
+    assert(tribe != NULL);
+    return tribe->name;
 }
 
 bool isValidTribeID(int id) {
@@ -48,7 +61,7 @@ Tribe stringToTribe(char* key, char* value) {
 Result tribeToString(Tribe tribe, char** key, char** value) {
     assert(tribe != NULL);
     *key = intToString(tribe->id);
-    *value = malloc(sizeof(*value)*strlen(tribe->name));
+    *value = malloc(sizeof(*value)*strlen((tribe->name)+1));
     if (*key == NULL || *value == NULL) {
         free(*key);
         free(*value);

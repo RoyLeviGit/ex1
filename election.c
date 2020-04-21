@@ -48,7 +48,7 @@ static ElectionResult isAreaExists(Election election, int area_id) {
         if (area == NULL) {
             return ELECTION_OUT_OF_MEMORY;
         }
-        if (area->id == area_id) {
+        if (getAreaID(area) == area_id) {
             areaDestroy(area); 
             return ELECTION_AREA_ALREADY_EXIST;
         }
@@ -64,7 +64,7 @@ static ElectionResult isTribeExists(Election election, int tribe_id) {
         if (tribe == NULL) {
             return ELECTION_OUT_OF_MEMORY;
         }
-        if (tribe->id == tribe_id) {
+        if (getTribeID(tribe) == tribe_id) {
             tribeDestroy(tribe);
             return ELECTION_TRIBE_ALREADY_EXIST;
         }
@@ -172,17 +172,17 @@ char* electionGetTribeName (Election election, int tribe_id) {
             tribeDestroy(tribe);
             return NULL;
         }
-        if (tribe->id == tribe_id){
+        if (getTribeID(tribe) == tribe_id) {
             tribeDestroy(tribe);
             // return copy of tribe name
             char* value = mapGet(election->tribes,key);
             tribe = stringToTribe(key, value);
-            char* name = malloc(sizeof(*name)*strlen(tribe->name));
+            char* name = malloc(sizeof(*name)*(strlen(getTribeName(tribe)+1)));
             if (name == NULL) {
                 tribeDestroy(tribe);
                 return NULL;
             }
-            strcpy(name, tribe->name);
+            strcpy(name, getTribeName(tribe));
             tribeDestroy(tribe);
             return name;
         }
@@ -288,8 +288,8 @@ ElectionResult electionRemoveVote(Election election, int area_id, int tribe_id, 
         return ELECTION_OUT_OF_MEMORY;
     }
     // change votes
-    new_vote->votes = old_vote->votes - new_vote->votes;
-    if (!isValidNumberOfVotes(new_vote->votes)) {
+    setVoteNumberOfVotes(new_vote, getVoteNumberOfVotes(old_vote) - getVoteNumberOfVotes(new_vote));
+    if (getVoteNumberOfVotes(new_vote) == 0) {
         mapRemove(election->votes, key);
     } else {
         // get new_vote new value and change it in the map
@@ -378,7 +378,7 @@ ElectionResult electionRemoveTribe (Election election, int tribe_id) {
         if(vote == NULL) {
             return ELECTION_OUT_OF_MEMORY;
         }
-        if (vote->tribe_id == tribe_id) {
+        if (getVoteTribeID(vote) == tribe_id) {
             mapRemove(election->votes, vote_key);
         }
         voteDestroy(vote);
@@ -396,7 +396,7 @@ ElectionResult electionRemoveAreas(Election election, AreaConditionFunction shou
         if (area == NULL) {
             return ELECTION_OUT_OF_MEMORY;
         }
-        if (should_delete_area(area->id)) {
+        if (should_delete_area(getAreaID(area))) {
             mapRemove(election->areas, key);
         }
         areaDestroy(area);
@@ -410,14 +410,54 @@ Map electionComputeAreasToTribesMapping (Election election) {
     }
     Map celebTribes = mapCreate();
 
+    // find smallest tribe id
+    char* first_tribe_key = mapGetFirst(election->tribes);
+    if (first_tribe_key == NULL) {
+        // no tribe means there are no votes
+        return celebTribes;
+    }
+    Tribe first_tribe = stringToTribe(first_tribe_key, GARBAGE_VALUE);
+    int smallest_tribe_id = getTribeID(first_tribe); 
+    tribeDestroy(first_tribe);
+
+    MAP_FOREACH(tribe_key, election->tribes) {
+        Tribe tribe = stringToTribe(tribe_key, GARBAGE_VALUE);
+        if (tribe == NULL) {
+            mapDestroy(celebTribes);
+            return NULL;
+        }
+        if (getTribeID(tribe) < smallest_tribe_id) {
+            smallest_tribe_id = getTribeID(tribe);
+        }
+        tribeDestroy(tribe);
+    }
+
+    // put smallest tribe id 
+    MAP_FOREACH(area_key, election->areas) {
+        char* initial_value = NULL;
+        Result result = twoNumbersToString(smallest_tribe_id, 0, &initial_value);
+        if (result == OUT_OF_MEMORY) {
+            mapDestroy(celebTribes);
+            return NULL;
+        }
+        assert (initial_value != NULL);
+        MapResult map_result = mapPut(celebTribes, area_key, initial_value);
+        if (map_result == MAP_OUT_OF_MEMORY) {
+            mapDestroy(celebTribes);
+            free(initial_value);
+            return NULL;
+        }
+    }
+
     MAP_FOREACH(vote_key, election->votes) {
         char* vote_value = mapGet(election->votes, vote_key);
         assert(vote_value != NULL);
         Vote vote = stringToVote(vote_key, vote_value);
         if (vote == NULL) {
+            mapDestroy(celebTribes);
             return NULL;
         }
-        char* area_key = intToString(vote->area_id);
+        char* area_key = intToString(getVoteAreaID(vote));
         if (area_key == NULL) {
             mapDestroy(celebTribes);
             voteDestroy(vote);
@@ -427,7 +467,7 @@ Map electionComputeAreasToTribesMapping (Election election) {
         
         if (area_value == NULL) {
             // area not currently in celebs map
-            Result result = twoNumbersToString(vote->tribe_id, vote->votes, &area_value);
+            Result result = twoNumbersToString(getVoteTribeID(vote), getVoteNumberOfVotes(vote), &area_value);
             if (result == OUT_OF_MEMORY) {
                 mapDestroy(celebTribes);
                 voteDestroy(vote);
@@ -453,9 +493,9 @@ Map electionComputeAreasToTribesMapping (Election election) {
                 return NULL;
             }
 
-            if (vote->votes > current_num_of_votes 
-            || (vote->votes == current_num_of_votes && vote->tribe_id < current_tribe_id)) {
-                Result result = twoNumbersToString(vote->tribe_id, vote->votes, &area_value);
+            if (getVoteNumberOfVotes(vote) > current_num_of_votes 
+            || (getVoteNumberOfVotes(vote) == current_num_of_votes && getVoteTribeID(vote) < current_tribe_id)) {
+                Result result = twoNumbersToString(getVoteTribeID(vote), getVoteNumberOfVotes(vote), &area_value);
                 if (result == OUT_OF_MEMORY) {
                     mapDestroy(celebTribes);
                     voteDestroy(vote);

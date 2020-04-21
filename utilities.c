@@ -14,7 +14,10 @@
 #define SPACE ' '
 
 static int lengthOfNum(int num) {
-    int sum =0;
+    if (num == 0) {
+        return 1;
+    }
+    int sum = 0;
     while(num != 0)
     {
         num /= NUMBER_BASE;
@@ -45,7 +48,6 @@ char* intToString(int num) {
     if (str == NULL) {
         return NULL;  
     }
-
     str[length] = 0;
     for (int i=length-1; i >= 0; i--, num /= NUMBER_BASE) {
         str[i] = (num%NUMBER_BASE)+ZERO_ASCII;
@@ -59,7 +61,7 @@ Result stringToTwoNumbers(const char* str, int* num1, int* num2) {
     assert(num2 != NULL);
 
     // create copy of str for token to destroy :)
-    char* copy = malloc(sizeof(*copy)*strlen(str));
+    char* copy = malloc(sizeof(*copy)*(strlen(str)+1));
     if (copy == NULL) {
         return OUT_OF_MEMORY;
     }

@@ -3,15 +3,15 @@
 
 #include "utilities.h"
 
-typedef struct tribe {
-    int id;
-    char* name;
-} *Tribe;
+typedef struct tribe *Tribe;
 
-// return - NULL is out of memory
 Tribe tribeCreate(int id, const char* name);
 
 void tribeDestroy(Tribe tribe);
+
+int getTribeID(Tribe tribe);
+
+char* getTribeName(Tribe tribe);
 
 bool isValidTribeID(int id);
 

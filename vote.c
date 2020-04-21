@@ -3,6 +3,12 @@
 
 #define EMPTY 0
 
+struct vote {
+    int area_id;
+    int tribe_id;
+    int votes;
+};
+
 Vote voteCreate(int area_id, int tribe_id, int votes) {
     Vote vote = malloc(sizeof(*vote));
     if (vote == NULL) {
@@ -16,6 +22,29 @@ Vote voteCreate(int area_id, int tribe_id, int votes) {
 
 void voteDestroy(Vote vote) {
     free(vote);
+}
+int getVoteAreaID(Vote vote){
+    assert(vote != NULL);
+    return vote->area_id;
+}
+
+int getVoteTribeID(Vote vote){
+    assert(vote != NULL);
+    return vote->tribe_id;
+}
+
+int getVoteNumberOfVotes(Vote vote){
+    assert(vote != NULL);
+    return vote->votes;
+}
+
+void setVoteNumberOfVotes(Vote vote, int votes){
+    assert(vote != NULL);
+    if(!isValidNumberOfVotes(votes)){
+        vote->votes = 0;
+    } else {
+        vote->votes = votes;  
+    }
 }
 
 bool isValidVoteID(int id) {

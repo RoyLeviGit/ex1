@@ -59,8 +59,8 @@ static Node nodeCopyData(Node node) {
         return NULL;
     }
 
-    copy->key = malloc(sizeof(*copy->key)*strlen(node->key));
-    copy->value = malloc(sizeof(*copy->value)*strlen(node->value));
+    copy->key = malloc(sizeof(*copy->key)*(strlen(node->key)+1));
+    copy->value = malloc(sizeof(*copy->value)*(strlen(node->value)+1));
     if (copy->key == NULL || copy->value == NULL) {
         free(copy->key);
         free(copy->value);
@@ -131,8 +131,8 @@ MapResult mapPut (Map map, const char* key, const char* data) {
         if (new_node == NULL) {
             return MAP_OUT_OF_MEMORY;
         }
-        new_node->key = malloc(sizeof(*new_node->key)*strlen(key));
-        new_node->value = malloc(sizeof(*new_node->value)*strlen(data));
+        new_node->key = malloc(sizeof(*new_node->key)*(strlen(key)+1));
+        new_node->value = malloc(sizeof(*new_node->value)*(strlen(data)+1));
         if (new_node->key == NULL || new_node->value == NULL) {
             free(new_node->key);
             free(new_node->value);

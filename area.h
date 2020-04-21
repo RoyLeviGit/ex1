@@ -3,15 +3,15 @@
 
 #include "utilities.h"
 
-typedef struct area {
-    int id;
-    char* name;
-} *Area;
-
+typedef struct area *Area;
 
 Area areaCreate(int id, const char* name);
 
 void areaDestroy(Area area);
+
+int getAreaID(Area area);
+
+char* getAreaName(Area area);
 
 bool isValidAreaID(int id);
 
