@@ -30,7 +30,7 @@ int stringToInt(char* str) {
     assert(str != NULL);
     int id = 0;
     int index = 0;
-    while (str[index]) {
+    while (*(str+index)) {
         if (str[index] >= ZERO_ASCII && str[index] <= NINE_ASCII) {
             id *= NUMBER_BASE;
             id += str[index]-ZERO_ASCII;
@@ -44,7 +44,7 @@ int stringToInt(char* str) {
 
 char* intToString(int num) {
     int length = lengthOfNum(num);
-    char* str =(char*)malloc((length+1)*sizeof(*str));
+    char* str =(char*)malloc(length+1);
     if (str == NULL) {
         return NULL;  
     }

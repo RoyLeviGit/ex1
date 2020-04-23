@@ -121,18 +121,19 @@ MapResult mapPut (Map map, const char* key, const char* data) {
     char* value = mapGet(map, key);
     // if map contains key
     if (value != NULL) {
-        value = realloc(value, sizeof(*value)*strlen(data));
-        if (value == NULL) {
+        char* tmp_value = realloc(value, strlen(data)+1);
+        if (tmp_value == NULL) {
             return MAP_OUT_OF_MEMORY;
         }
+        value = tmp_value;
         strcpy(value, data);
     } else {
         Node new_node = malloc(sizeof(*new_node));
         if (new_node == NULL) {
             return MAP_OUT_OF_MEMORY;
         }
-        new_node->key = malloc(sizeof(*new_node->key)*(strlen(key)+1));
-        new_node->value = malloc(sizeof(*new_node->value)*(strlen(data)+1));
+        new_node->key = malloc(strlen(key)+1);
+        new_node->value = malloc(strlen(data)+1);
         if (new_node->key == NULL || new_node->value == NULL) {
             free(new_node->key);
             free(new_node->value);
