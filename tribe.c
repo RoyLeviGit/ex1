@@ -61,7 +61,7 @@ Tribe stringToTribe(char* key, char* value) {
 Result tribeToString(Tribe tribe, char** key, char** value) {
     assert(tribe != NULL);
     *key = intToString(tribe->id);
-    *value = malloc(sizeof(*value)*strlen((tribe->name)+1));
+    *value = malloc(strlen(tribe->name)+1);
     if (*key == NULL || *value == NULL) {
         free(*key);
         free(*value);

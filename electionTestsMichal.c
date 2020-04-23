@@ -70,7 +70,7 @@ bool  testAddRemoveVotes() {
     return true;
 }
 
-bool testTribeName(){
+bool testTribeName() {
     Election election = electionCreate();
     ASSERT_TEST(electionAddTribe(election, FIRST_TRIBE, "first tribe") == ELECTION_SUCCESS); //create tribe 1
     ASSERT_TEST(electionAddTribe(election, SECOND_TRIBE, "second tribe") == ELECTION_SUCCESS); //create tribe 2
@@ -78,12 +78,18 @@ bool testTribeName(){
     ASSERT_TEST(electionAddArea(election, FIRST_AREA, "first area") == ELECTION_SUCCESS); //create area 1
     ASSERT_TEST(electionAddArea(election, SECOND_AREA, "second area") == ELECTION_SUCCESS); //create area 2
 
-    ASSERT_TEST(strcmp(electionGetTribeName(election, THIRD_TRIBE), "third tribe") == 0);
+    char* tribe_name = electionGetTribeName(election, THIRD_TRIBE);
+    ASSERT_TEST(strcmp(tribe_name, "third tribe") == 0);
+    free(tribe_name);
     ASSERT_TEST(electionGetTribeName(election, 100) == NULL);
     ASSERT_TEST(electionSetTribeName(election, THIRD_TRIBE, "Hello") == ELECTION_INVALID_NAME);
-    ASSERT_TEST(strcmp(electionGetTribeName(election, THIRD_TRIBE), "third tribe") == 0);
+    tribe_name = electionGetTribeName(election, THIRD_TRIBE);
+    ASSERT_TEST(strcmp(tribe_name, "third tribe") == 0);
+    free(tribe_name);
     ASSERT_TEST(electionSetTribeName(election, THIRD_TRIBE, "hello") == ELECTION_SUCCESS);
-    ASSERT_TEST(strcmp(electionGetTribeName(election, THIRD_TRIBE), "third tribe") != 0);
+    tribe_name = electionGetTribeName(election, THIRD_TRIBE);
+    ASSERT_TEST(strcmp(tribe_name, "third tribe") != 0);
+    free(tribe_name);
 
     electionDestroy(election);
     return true;

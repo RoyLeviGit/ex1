@@ -44,7 +44,7 @@ int stringToInt(char* str) {
 
 char* intToString(int num) {
     int length = lengthOfNum(num);
-    char* str =(char*)malloc(length+1);
+    char* str = malloc(length+1);
     if (str == NULL) {
         return NULL;  
     }
@@ -78,7 +78,7 @@ Result stringToTwoNumbers(const char* str, int* num1, int* num2) {
 Result twoNumbersToString(int num1, int num2, char** str) {
     char* num1_string = intToString(num1);
     char* num2_string = intToString(num2);
-    *str = malloc(sizeof(**str)*(strlen(num1_string)+strlen(num2_string)+TOKEN_LENGTH+1));
+    *str = malloc(strlen(num1_string)+strlen(num2_string)+TOKEN_LENGTH+1);
     if (num1_string == NULL || num2_string == NULL || *str == NULL) {
         free(num1_string);
         free(num2_string);
@@ -87,6 +87,8 @@ Result twoNumbersToString(int num1, int num2, char** str) {
     }
 
     sprintf(*str, "%s%s%s", num1_string, TOKEN, num2_string);
+    free(num1_string);
+    free(num2_string);
     return SUCCESS;
 }
 

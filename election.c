@@ -177,7 +177,7 @@ char* electionGetTribeName (Election election, int tribe_id) {
             // return copy of tribe name
             char* value = mapGet(election->tribes,key);
             tribe = stringToTribe(key, value);
-            char* name = malloc(sizeof(*name)*(strlen(getTribeName(tribe)+1)));
+            char* name = malloc(strlen(getTribeName(tribe))+1);
             if (name == NULL) {
                 tribeDestroy(tribe);
                 return NULL;
@@ -293,6 +293,8 @@ ElectionResult electionRemoveVote(Election election, int area_id, int tribe_id, 
         mapRemove(election->votes, key);
     } else {
         // get new_vote new value and change it in the map
+        free(key);
+        free(value);
         if (voteToString(new_vote, &key, &value) == OUT_OF_MEMORY) {
             voteDestroy(new_vote);
             voteDestroy(old_vote);
@@ -447,6 +449,7 @@ Map electionComputeAreasToTribesMapping (Election election) {
             free(initial_value);
             return NULL;
         }
+        free(initial_value);
     }
 
     MAP_FOREACH(vote_key, election->votes) {
@@ -511,10 +514,11 @@ Map electionComputeAreasToTribesMapping (Election election) {
                     free(area_value);
                     return NULL;
                 }
+                free(area_value);
             }
         }
         voteDestroy(vote);
-        free(area_key);  
+        free(area_key);
     }
 
     // set correct value format
