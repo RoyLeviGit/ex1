@@ -32,7 +32,7 @@ Map mapCreate() {
 }
 
 static void nodeListDestroy(Node head) {
-    while (head!=NULL){
+    while (head != NULL){
         free(head->key);
         free(head->value);
         Node tmp = head->next;
@@ -64,6 +64,7 @@ static Node nodeCopyData(Node node) {
     if (copy->key == NULL || copy->value == NULL) {
         free(copy->key);
         free(copy->value);
+        free(copy);
         return NULL;
     }
 
@@ -75,20 +76,22 @@ static Node nodeCopyData(Node node) {
 
 Map mapCopy(Map map) {
     Map copy = mapCreate();
-    if (map == NULL || map->head==NULL || copy == NULL) {
+    if (map == NULL || copy == NULL) {
         mapDestroy(copy);
         return NULL;
+    }
+    if (map->head == NULL) {
+        return copy;
     }
 
     Node current_origin = map->head;
-    Node current_copy = copy->head;
     // take care of head
-    current_copy = nodeCopyData(current_origin);
-    if (current_copy == NULL) {
+    copy->head = nodeCopyData(current_origin);
+    if (copy->head == NULL) {
         mapDestroy(copy);
         return NULL;
     }
-    
+    Node current_copy = copy->head;
     while (current_origin->next != NULL) {
         current_copy->next = nodeCopyData(current_origin->next);
         if (current_copy->next == NULL) {
@@ -113,20 +116,32 @@ bool mapContains (Map map, const char* key) {
     return (mapGet(map, key) != NULL);
 }
 
+static Node getNodeByKey(Map map, const char* key) {
+    assert(map != NULL);
+    assert(key != NULL);
+
+    for (Node current = map->head; current !=NULL; current = current->next) {
+        if (!strcmp(current->key, key)) {
+            return current;
+        }
+    }
+    return NULL;
+}
+
 MapResult mapPut (Map map, const char* key, const char* data) {
     if (map == NULL || key == NULL || data == NULL) {
         return MAP_NULL_ARGUMENT;
     }
     
-    char* value = mapGet(map, key);
+    Node node = getNodeByKey(map, key);
     // if map contains key
-    if (value != NULL) {
-        char* tmp_value = realloc(value, strlen(data)+1);
-        if (tmp_value == NULL) {
+    if (node != NULL) {
+        free(node->value);
+        node->value = malloc(strlen(data)+1);
+        if (node->value == NULL) {
             return MAP_OUT_OF_MEMORY;
         }
-        value = tmp_value;
-        strcpy(value, data);
+        strcpy(node->value, data);
     } else {
         Node new_node = malloc(sizeof(*new_node));
         if (new_node == NULL) {
@@ -154,13 +169,8 @@ char* mapGet(Map map, const char* key) {
     if (map == NULL || key == NULL) {
         return NULL;
     }
-    
-    for (Node current = map->head; current !=NULL; current = current->next) {
-        if (!strcmp(current->key, key)) {
-            return current->value;
-        }
-    }
-    return NULL;
+    Node node = getNodeByKey(map, key);
+    return node == NULL ? NULL : node->value;
 }
 
 MapResult mapRemove(Map map, const char* key) {
@@ -173,7 +183,7 @@ MapResult mapRemove(Map map, const char* key) {
     Node previous, current = map->head;
 
     // take care if head case
-    if (current !=NULL && !strcmp(current->key, key)) {
+    if (current != NULL && !strcmp(current->key, key)) {
         free(current->key);
         free(current->value);
         map->head = current->next;
@@ -182,7 +192,7 @@ MapResult mapRemove(Map map, const char* key) {
         return MAP_SUCCESS;
     }
 
-    while (current !=NULL && strcmp(current->key, key)) {
+    while (current != NULL && strcmp(current->key, key)) {
         previous = current;
         current = current->next;
     }
