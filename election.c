@@ -7,7 +7,7 @@
 #include "vote.h"
 
 #define NO_INDEX -1
-#define GARBAGE_VALUE ""
+#define GARBAGE_NAME ""
 
 struct election_t {
     Map areas;
@@ -44,7 +44,7 @@ void electionDestroy(Election election) {
 static ElectionResult isAreaExists(Election election, int area_id) {
     assert(election != NULL);
     MAP_FOREACH(key, election->areas) {
-        Area area = stringToArea(key, GARBAGE_VALUE);
+        Area area = stringToArea(key, mapGet(election->areas, key));
         if (area == NULL) {
             return ELECTION_OUT_OF_MEMORY;
         }
@@ -60,7 +60,7 @@ static ElectionResult isAreaExists(Election election, int area_id) {
 static ElectionResult isTribeExists(Election election, int tribe_id) {
     assert(election != NULL);
     MAP_FOREACH(key, election->tribes) {
-        Tribe tribe = stringToTribe(key, GARBAGE_VALUE);
+        Tribe tribe = stringToTribe(key, mapGet(election->tribes, key));
         if (tribe == NULL) {
             return ELECTION_OUT_OF_MEMORY;
         }
@@ -167,7 +167,7 @@ char* electionGetTribeName (Election election, int tribe_id) {
     }
     
     MAP_FOREACH(key, election->tribes) {
-        Tribe tribe = stringToTribe(key, GARBAGE_VALUE);
+        Tribe tribe = stringToTribe(key, mapGet(election->tribes, key));
         if (tribe == NULL) {
             tribeDestroy(tribe);
             return NULL;
@@ -352,7 +352,7 @@ ElectionResult electionRemoveTribe (Election election, int tribe_id) {
     if (search_result == ELECTION_TRIBE_NOT_EXIST) {
         return ELECTION_TRIBE_NOT_EXIST;
     }
-    Tribe tribe = tribeCreate(tribe_id, GARBAGE_VALUE);
+    Tribe tribe = tribeCreate(tribe_id, GARBAGE_NAME);
     if (tribe == NULL || search_result == ELECTION_OUT_OF_MEMORY) {
         tribeDestroy(tribe);
         return ELECTION_OUT_OF_MEMORY;
@@ -376,7 +376,7 @@ ElectionResult electionRemoveTribe (Election election, int tribe_id) {
 
     // remove tribe from votes map
     MAP_FOREACH(vote_key, election->votes) {
-        Vote vote = stringToVote(vote_key, GARBAGE_VALUE);
+        Vote vote = stringToVote(vote_key, mapGet(election->votes, vote_key));
         if(vote == NULL) {
             return ELECTION_OUT_OF_MEMORY;
         }
@@ -394,7 +394,7 @@ ElectionResult electionRemoveAreas(Election election, AreaConditionFunction shou
     }
 
     MAP_FOREACH(key, election->areas) {
-        Area area = stringToArea(key, GARBAGE_VALUE);
+        Area area = stringToArea(key, mapGet(election->areas, key));
         if (area == NULL) {
             return ELECTION_OUT_OF_MEMORY;
         }
@@ -418,12 +418,12 @@ Map electionComputeAreasToTribesMapping (Election election) {
         // no tribe means there are no votes
         return celebTribes;
     }
-    Tribe first_tribe = stringToTribe(first_tribe_key, GARBAGE_VALUE);
+    Tribe first_tribe = stringToTribe(first_tribe_key, mapGet(election->tribes, first_tribe_key));
     int smallest_tribe_id = getTribeID(first_tribe); 
     tribeDestroy(first_tribe);
 
     MAP_FOREACH(tribe_key, election->tribes) {
-        Tribe tribe = stringToTribe(tribe_key, GARBAGE_VALUE);
+        Tribe tribe = stringToTribe(tribe_key, mapGet(election->tribes, tribe_key));
         if (tribe == NULL) {
             mapDestroy(celebTribes);
             return NULL;

@@ -1,18 +1,11 @@
 #include "map.h"
+#include "node.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>
 
 #define NO_SIZE -1
-
-struct Node {
-    char* key;
-    char* value;
-    struct Node* next;
-};
-
-typedef struct Node* Node;
 
 struct Map_t {
    Node head;
@@ -31,47 +24,12 @@ Map mapCreate() {
     return map;
 }
 
-static void nodeListDestroy(Node head) {
-    while (head != NULL){
-        free(head->key);
-        free(head->value);
-        Node tmp = head->next;
-        free(head);
-        head = tmp;
-    }
-}
-
 void mapDestroy(Map map) {
     if (map==NULL) {
         return;
     }
     nodeListDestroy(map->head);
     free(map);
-}
-
-static Node nodeCopyData(Node node) {
-    assert(node != NULL);
-    assert(node->key != NULL);
-    assert(node->value != NULL);
-
-    Node copy = malloc(sizeof(*copy));
-    if (copy == NULL) {
-        return NULL;
-    }
-
-    copy->key = malloc(sizeof(*copy->key)*(strlen(node->key)+1));
-    copy->value = malloc(sizeof(*copy->value)*(strlen(node->value)+1));
-    if (copy->key == NULL || copy->value == NULL) {
-        free(copy->key);
-        free(copy->value);
-        free(copy);
-        return NULL;
-    }
-
-    strcpy(copy->key,node->key);
-    strcpy(copy->value,node->value);
-    copy->next = NULL;
-    return copy;
 }
 
 Map mapCopy(Map map) {
@@ -92,14 +50,14 @@ Map mapCopy(Map map) {
         return NULL;
     }
     Node current_copy = copy->head;
-    while (current_origin->next != NULL) {
-        current_copy->next = nodeCopyData(current_origin->next);
-        if (current_copy->next == NULL) {
+    while (nodeGetNext(current_origin) != NULL) {
+        nodeSetNext(current_copy, nodeCopyData(nodeGetNext(current_origin)));
+        if (nodeGetNext(current_copy) == NULL) {
             mapDestroy(copy);
             return NULL;
         }
-        current_copy = current_copy->next;
-        current_origin = current_origin->next;  
+        current_copy = nodeGetNext(current_copy);
+        current_origin = nodeGetNext(current_origin);  
     }
     copy->size = map->size;
     return copy;
@@ -116,12 +74,13 @@ bool mapContains (Map map, const char* key) {
     return (mapGet(map, key) != NULL);
 }
 
+// find node in map by given key
 static Node getNodeByKey(Map map, const char* key) {
     assert(map != NULL);
     assert(key != NULL);
 
-    for (Node current = map->head; current !=NULL; current = current->next) {
-        if (!strcmp(current->key, key)) {
+    for (Node current = map->head; current !=NULL; current = nodeGetNext(current)) {
+        if (!strcmp(nodeGetKey(current), key)) {
             return current;
         }
     }
@@ -136,29 +95,17 @@ MapResult mapPut (Map map, const char* key, const char* data) {
     Node node = getNodeByKey(map, key);
     // if map contains key
     if (node != NULL) {
-        free(node->value);
-        node->value = malloc(strlen(data)+1);
-        if (node->value == NULL) {
+        free(nodeGetValue(node));
+        nodeSetValue(node, malloc(strlen(data)+1));
+        if (nodeGetValue(node) == NULL) {
             return MAP_OUT_OF_MEMORY;
         }
-        strcpy(node->value, data);
+        strcpy(nodeGetValue(node), data);
     } else {
-        Node new_node = malloc(sizeof(*new_node));
+        Node new_node = nodeCreate(key, data, map->head);
         if (new_node == NULL) {
             return MAP_OUT_OF_MEMORY;
         }
-        new_node->key = malloc(strlen(key)+1);
-        new_node->value = malloc(strlen(data)+1);
-        if (new_node->key == NULL || new_node->value == NULL) {
-            free(new_node->key);
-            free(new_node->value);
-            free(new_node);
-            return MAP_OUT_OF_MEMORY;
-        }
-        strcpy(new_node->key, key);
-        strcpy(new_node->value, data);
-
-        new_node->next = map->head;
         map->head = new_node;
         map->size++;
    }
@@ -170,7 +117,7 @@ char* mapGet(Map map, const char* key) {
         return NULL;
     }
     Node node = getNodeByKey(map, key);
-    return node == NULL ? NULL : node->value;
+    return node == NULL ? NULL : nodeGetValue(node);
 }
 
 MapResult mapRemove(Map map, const char* key) {
@@ -183,27 +130,23 @@ MapResult mapRemove(Map map, const char* key) {
     Node previous, current = map->head;
 
     // take care if head case
-    if (current != NULL && !strcmp(current->key, key)) {
-        free(current->key);
-        free(current->value);
-        map->head = current->next;
-        free(current);
+    if (current != NULL && !strcmp(nodeGetKey(current), key)) {
+        map->head = nodeGetNext(current);
+        nodeDestroy(current);
         map->size--;
         return MAP_SUCCESS;
     }
 
-    while (current != NULL && strcmp(current->key, key)) {
+    while (current != NULL && strcmp(nodeGetKey(current), key)) {
         previous = current;
-        current = current->next;
+        current = nodeGetNext(current);
     }
 
     if (current == NULL) {
         return MAP_ITEM_DOES_NOT_EXIST;
     }
-    previous->next = current->next;
-    free(current->key);
-    free(current->value);
-    free(current);
+    nodeSetNext(previous, nodeGetNext(current));
+    nodeDestroy(current);
     map->size--;
     return MAP_SUCCESS;
 }
@@ -212,18 +155,18 @@ char* mapGetFirst(Map map) {
     if (map == NULL || map->head == NULL) {
         return NULL;
     }
-    assert(map->head->key != NULL);
+    assert(nodeGetKey(map->head) != NULL);
     map->iterator = map->head;
-    return map->iterator->key;
+    return nodeGetKey(map->iterator);
 }
 
 char* mapGetNext(Map map){
-    if (map==NULL || map->iterator==NULL || map->iterator->next==NULL) {
+    if (map == NULL || map->iterator == NULL || nodeGetNext(map->iterator) == NULL) {
         return NULL;
     }
-    assert(map->iterator->next->key!=NULL);
-    map->iterator = map->iterator->next;
-    return map->iterator->key;
+    assert(nodeGetKey(nodeGetNext(map->iterator)) != NULL);
+    map->iterator = nodeGetNext(map->iterator);
+    return nodeGetKey(map->iterator);
 }
 
 MapResult mapClear(Map map) {
@@ -237,13 +180,6 @@ MapResult mapClear(Map map) {
     return MAP_SUCCESS;
 }
 
-static void nodePrint(Node node) {
-    assert(node != NULL);
-    assert(node->key != NULL);
-    assert(node->value != NULL);
-    printf("\"%s\" : \"%s\"\n", node->key, node->value);
-}
-
 void mapPrint(Map map){
     if (map==NULL) {
         printf("Map is NULL\n");
@@ -253,7 +189,7 @@ void mapPrint(Map map){
     Node current = map->head;
     while (current!=NULL) {
         nodePrint(current);
-        current = current->next;
+        current = nodeGetNext(current);
     }
     return;
 }
