@@ -52,7 +52,7 @@ bool isValidVoteID(int id) {
 }
 
 bool isValidNumberOfVotes(int num_of_votes){
-    if (num_of_votes < EMPTY) {
+    if (num_of_votes <= EMPTY) {
         return false;
     }
     return true;
